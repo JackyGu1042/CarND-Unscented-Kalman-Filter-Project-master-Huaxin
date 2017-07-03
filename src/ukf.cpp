@@ -8,6 +8,8 @@ using Eigen::MatrixXd;
 using Eigen::VectorXd;
 using std::vector;
 
+ofstream NIS_file;
+
 /**
  * Initializes Unscented Kalman filter
  */
@@ -25,10 +27,10 @@ UKF::UKF() {
   P_ = MatrixXd(5, 5);
 
   // Process noise standard deviation longitudinal acceleration in m/s^2
-  std_a_ = 30;
+  std_a_ = 0.3;
 
   // Process noise standard deviation yaw acceleration in rad/s^2
-  std_yawdd_ = 30;
+  std_yawdd_ = 0.3;
 
   // Laser measurement noise standard deviation position1 in m
   std_laspx_ = 0.15;
@@ -67,11 +69,11 @@ UKF::UKF() {
     // Weights of sigma points
     weights_ = VectorXd(2*n_aug_+1);
     
-    P_<<1,0,0,0,0,
-		0,1,0,0,0,
-		0,0,1,0,0,
-		0,0,0,1,0,
-		0,0,0,0,1;
+    P_<<0.1,0,0,0,0,
+		0,0.1,0,0,0,
+		0,0,0.1,0,0,
+		0,0,0,0.1,0,
+		0,0,0,0,0.1;
 }
 
 UKF::~UKF() {}
@@ -92,6 +94,7 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
     /*****************************************************************************
     *  Initialization
     ****************************************************************************/
+    
     
 	if (!is_initialized_) {
 
@@ -156,6 +159,7 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
     /*****************************************************************************
      *  Update
      ****************************************************************************/
+    NIS_file.open ("NIS_file.txt");
     
     cout << "ProcessMeasurement()->Update" << endl;
     
@@ -173,6 +177,8 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
     // print the output
     cout << "x_ = " << x_ << endl;
     cout << "P_ = " << P_ << endl;
+    
+    NIS_file.close();
 }
 
 /**
@@ -421,14 +427,14 @@ void UKF::UpdateLidar(MeasurementPackage meas_package) {
     P_ = P_ - K_*S_*K_.transpose();
 	
 	//Normalized Innovation Squared(NIS) calculation
-	double diff_NIS = (z_ - z_pred_);
-	double NIS = diff_NIS.transpose()*S_*diff_NIS;
+    //double diff_NIS = (z_ - z_pred_);
+    double NIS = (z_ - z_pred_).transpose()*S_*(z_ - z_pred_);
 	
 	std::cout << "UpdateLidar()->NIS: " << NIS << std::endl;
-	ofstream NIS_file;
-	NIS_file.open ("NIS_file.txt");
-	NIS_file << NIS;
-	NIS_file.close();
+	
+	//NIS_file.open ("NIS_file.txt");
+	NIS_file << NIS << "\n";
+	//NIS_file.close();
 }
 
 /**
@@ -541,12 +547,12 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
     P_ = P_ - K_*S_*K_.transpose();
 	
 	//Normalized Innovation Squared(NIS) calculation
-	double diff_NIS = (z_ - z_pred_);
-	double NIS = diff_NIS.transpose()*S_*diff_NIS;
+	//double diff_NIS = (z_ - z_pred_);
+	double NIS = (z_ - z_pred_).transpose()*S_*(z_ - z_pred_);
 	
 	std::cout << "UpdateLidar()->NIS: " << NIS << std::endl;
-	ofstream NIS_file;
-	NIS_file.open ("NIS_file.txt");
-	NIS_file << NIS;
-	NIS_file.close();
+	//ofstream NIS_file;
+	//NIS_file.open ("NIS_file.txt");
+    NIS_file << NIS << "\n";
+	//NIS_file.close();
 }
